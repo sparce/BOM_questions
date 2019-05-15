@@ -12,10 +12,10 @@ BOM_stations <- read_csv("data/BOM_stations.csv")
 
 #Will need this data frame again later
 BOM_with_temps <- BOM_data %>% 
-  separate(Temp_min_max, into = c("t_min", "t_max"), sep = "/") %>% 
-  filter(t_min != "-", t_max != "-", Rainfall != "-")
+  separate(Temp_min_max, into = c("t_min", "t_max"), sep = "/") 
 
 q1_ans <- BOM_with_temps %>% 
+  filter(t_min != "-", t_max != "-", Rainfall != "-") %>% 
   group_by(Station_number) %>% 
   summarise(num_records = n())
 
@@ -34,12 +34,14 @@ write_csv(q1_ans, "results/q1_record_completeness_by_station.csv")
 
 BOM_with_temps %>% 
   mutate(t_diff = as.numeric(t_max) - as.numeric(t_min)) %>%  # t_min/t_max are text ("<chr>") need to convert them to numbers 
+  filter(!is.na(t_diff)) %>% #t_diff will be NA where the t_min or t_max values were missing, need to remove those lines
   arrange(t_diff)
 
 # Quite a few days with equal min and max temps. 
 # Let's look at the differences averaged across a month instead
 q2a_ans <- BOM_with_temps %>% 
   mutate(t_diff = as.numeric(t_max) - as.numeric(t_min)) %>%
+  filter(!is.na(t_diff)) %>% 
   group_by(Month) %>% 
   summarise(avg_t_diff = mean(t_diff)) %>% 
   arrange(avg_t_diff)
@@ -105,6 +107,7 @@ BOM_combined <- left_join(BOM_with_temps, stations_tidy)
 # values in descending order
 q2b_ans <- BOM_combined %>% 
   mutate(t_diff = as.numeric(t_max) - as.numeric(t_min)) %>%
+  filter(!is.na(t_diff)) %>% 
   group_by(state) %>% 
   summarise(avg_t_diff = mean(t_diff)) %>% 
   arrange(desc(avg_t_diff))
@@ -117,5 +120,42 @@ q2b_ans
 write_csv(q2a_ans, "results/q2a_avg_tempdiff_by_month.csv")
 write_csv(q2b_ans, "results/q2b_avg_tempdiff_by_state.csv")
 
+#Q3: Which state had the lowest average monthly minimum temperature after excluding sites more  ----
+#    than 500m above sea level.
+#
+#    Bit of interpretation required here. I read it as requiring two averages, first the monthly 
+#    average minimum per state, then averaging those monthly average minimums for each state.
+#
+#    You may interpret the question differently, as only needing the first averaging step. In that
+#    case, you won't need step 4 below:
+#
+#    1) filter to include sites above 500m and that have minimum temperature data
+#    2) group by the state and month
+#    3) take the average of the minimum temperature, will be average per month, per state
+#    4) take the average of those averages, will be an average of the monthly average minimum per state
+#    5) arrange by our final summary value to see the state with the lowest
 
+# t_min is still a character in BOM_combined at the moment, so we would need to convert it with 
+# eg. mutate(BOM_combined, t_min = as.numeric(t_min))
 
+# But I'll introduce a new function type_convert() that looks at all columns in a data frame and tries
+# to convert them to their most likely data type.
+# Since we remove rows with "-" for t_min, all that should be left is numbers
+# and so type_convert() will notice that and convert them.
+
+q3_ans <- BOM_combined %>% 
+  filter(t_min != "-", elev < 500) %>% #"elev"ation data came from the BOM_stations data frame
+  type_convert() %>% # t_min is now a numeric type (as are several other columns)
+  group_by(state, Month) %>% 
+  summarise(avg_monthly_min = mean(t_min)) %>% 
+  summarise(avg_min = mean(avg_monthly_min)) %>% 
+  arrange(avg_min)
+
+# Print it to the screen if running in RStudio
+# VIC comes out with the lowest average minimum temp in this case (8.42)
+# If you did only the first summary step above, you will get a different table that has VIC in 
+# Month 7 (July) on top with an average minimum for the month of 2.98
+q3_ans
+
+#Write out the anQ3 ansswer to a file
+write_csv(q3_ans, "results/q3_averaged_monthly_minimums_per_state.csv")
