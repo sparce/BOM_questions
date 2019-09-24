@@ -46,14 +46,18 @@ q2_ans
 #Write out Q2 answer to a file
 write_csv(q2a_ans, "results/q2a_avg_tempdiff_by_month.csv")
 
-# To bring in the state information, we will need to join it with BOM_stations. But BOM_stations has
-# the station identifiers as column headers, so need to gather them first
+# Q3: Which state saw the lowest average daily temperature difference? -----
+
+# State information does not exist in the BOM_data.csv file. It is in the BOM_stations.csv file. We
+# will need to join these two data frames together to use them. But BOM_stations.csv has
+# the station identifiers as column headers, while BOM_data.csv has them as the values in a column.
+# We will need to tidy BOM_stations.csv with a gather and spread before we can join it.
 
 # We want to take the column names and store them in a new column called "Station_number" to match 
 # how they are named in the BOM_data data frame. We will create a new column called "values" to store 
 # all the information that used to be stored in the columns under each station number. By default we 
 # would gather up the data from *all* columns doing this, but we want to do it for everything but the 
-# info column, so I'll exclude that with '-info'
+# info column, so we can exclude that with '-info'
 
 stations_very_long <- BOM_stations %>% 
   gather(key = "Station_number", value = "values", -info) 
@@ -112,8 +116,7 @@ q2b_ans <- BOM_combined %>%
 #Can see that the ACT has the highest average differences between min and max temperatures (14.5)
 q2b_ans
 
-#Write out both Q2 answers to a file
-write_csv(q2a_ans, "results/q2a_avg_tempdiff_by_month.csv")
+
 write_csv(q2b_ans, "results/q2b_avg_tempdiff_by_state.csv")
 
 #Q3: Which state had the lowest average monthly minimum temperature after excluding sites more  ----
