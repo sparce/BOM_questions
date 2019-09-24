@@ -25,22 +25,15 @@ q1_ans
 #Save it to a file 
 write_csv(q1_ans, "results/q1_record_completeness_by_station.csv")
 
-# Q2: Which month saw the lowest difference between minimum and maximum temperatures in a day? -----
-#    And which state saw the highest?
+# Q2: Which month saw the lowest average daily temperature difference? -----
 # 
-#    Month data is found in BOM_data, state is in BOM_stations so will need a join for the last part
 #    To find the *difference* between min amd max temp, will need to mutate the data. Can then
 #    arrange it to look at highest/lowest.
 
-BOM_with_temps %>% 
-  mutate(t_diff = as.numeric(t_max) - as.numeric(t_min)) %>%  # t_min/t_max are text ("<chr>") need to convert them to numbers 
-  filter(!is.na(t_diff)) %>% #t_diff will be NA where the t_min or t_max values were missing, need to remove those lines
-  arrange(t_diff)
-
-# Quite a few days with equal min and max temps. 
-# Let's look at the differences averaged across a month instead
-q2a_ans <- BOM_with_temps %>% 
+q2_ans <- BOM_with_temps %>% 
+  # t_min/t_max are text ("<chr>") need to convert them to numbers
   mutate(t_diff = as.numeric(t_max) - as.numeric(t_min)) %>%
+  #t_diff will be NA where the t_min or t_max values were missing, need to remove those lines
   filter(!is.na(t_diff)) %>% 
   group_by(Month) %>% 
   summarise(avg_t_diff = mean(t_diff)) %>% 
@@ -48,7 +41,10 @@ q2a_ans <- BOM_with_temps %>%
 
 #Print it to the screen if running in RStudio
 #Can see that it's Month 6 (June) with the lowest average temp difference 
-q2a_ans
+q2_ans
+
+#Write out Q2 answer to a file
+write_csv(q2a_ans, "results/q2a_avg_tempdiff_by_month.csv")
 
 # To bring in the state information, we will need to join it with BOM_stations. But BOM_stations has
 # the station identifiers as column headers, so need to gather them first
