@@ -44,7 +44,7 @@ q2_ans <- BOM_with_temps %>%
 q2_ans
 
 #Write out Q2 answer to a file
-write_csv(q2a_ans, "results/q2a_avg_tempdiff_by_month.csv")
+write_csv(q2_ans, "results/q2_avg_tempdiff_by_month.csv")
 
 # Q3: Which state saw the lowest average daily temperature difference? -----
 
@@ -72,7 +72,7 @@ stations_very_long <- BOM_stations %>%
 
 # We now want to restructure the data frame again. This time creating new columns with names from the 
 # current info column and the contents of the new columns coming from the current 'values' column
-# This is essentially the reverse of the gather step and so is a spread
+# This is the reverse of a gather step and so is a spread
 
 stations_tidy <- stations_very_long %>% 
   spread(key = info, value = values)
@@ -92,20 +92,20 @@ stations_tidy <- stations_very_long %>%
 #
 #Error: Can't join on 'Station_number' x 'Station_number' because of incompatible types (character / numeric)
 
-# So need to convert them to the same data type. I'm going to be slightly dangerous and just overwrite
+# So we need to convert them to the same data type. A slightly dangerous method is to just overwrite
 # the column in the stations_tidy data frame. It's unlikely to be an issue in this case as we are
 # never going to need the station numbers as a character
 
 stations_tidy <- mutate(stations_tidy, Station_number = as.numeric(Station_number))
 
 #Join the two together properly now. Both have a "Station_number" column to join on
-#This brings the sstation metadata (including state) into our data frame with the meterological measurements
+#This brings the station metadata (including state) into our data frame with the meterological measurements
 BOM_combined <- left_join(BOM_with_temps, stations_tidy)
 
-# Now can run the same analysis as for Q2a. Only differences are that we will group by state instead
+# Now can run the same analysis as for Q2. Only differences are that we will group by state instead
 # of month, and we want to see the *highest* average temperature difference, so we will arrange the
 # values in descending order
-q2b_ans <- BOM_combined %>% 
+q3_ans <- BOM_combined %>% 
   mutate(t_diff = as.numeric(t_max) - as.numeric(t_min)) %>%
   filter(!is.na(t_diff)) %>% 
   group_by(state) %>% 
@@ -114,47 +114,39 @@ q2b_ans <- BOM_combined %>%
 
 #Print it to the screen if running in RStudio
 #Can see that the ACT has the highest average differences between min and max temperatures (14.5)
-q2b_ans
-
-
-write_csv(q2b_ans, "results/q2b_avg_tempdiff_by_state.csv")
-
-#Q3: Which state had the lowest average monthly minimum temperature after excluding sites more  ----
-#    than 500m above sea level.
-#
-#    Bit of interpretation required here. I read it as requiring two averages, first the monthly 
-#    average minimum per state, then averaging those monthly average minimums for each state.
-#
-#    You may interpret the question differently, as only needing the first averaging step. In that
-#    case, you won't need step 4 below:
-#
-#    1) filter to include sites above 500m and that have minimum temperature data
-#    2) group by the state and month
-#    3) take the average of the minimum temperature, will be average per month, per state
-#    4) take the average of those averages, will be an average of the monthly average minimum per state
-#    5) arrange by our final summary value to see the state with the lowest
-
-# t_min is still a character in BOM_combined at the moment, so we would need to convert it with 
-# eg. mutate(BOM_combined, t_min = as.numeric(t_min))
-
-# But I'll introduce a new function type_convert() that looks at all columns in a data frame and tries
-# to convert them to their most likely data type.
-# Since we remove rows with "-" for t_min, all that should be left is numbers
-# and so type_convert() will notice that and convert them.
-
-q3_ans <- BOM_combined %>% 
-  filter(t_min != "-", elev < 500) %>% #"elev"ation data came from the BOM_stations data frame
-  type_convert() %>% # t_min is now a numeric type (as are several other columns)
-  group_by(state, Month) %>% 
-  summarise(avg_monthly_min = mean(t_min)) %>% 
-  summarise(avg_min = mean(avg_monthly_min)) %>% 
-  arrange(avg_min)
-
-# Print it to the screen if running in RStudio
-# VIC comes out with the lowest average minimum temp in this case (8.42)
-# If you did only the first summary step above, you will get a different table that has VIC in 
-# Month 7 (July) on top with an average minimum for the month of 2.98
 q3_ans
 
-#Write out the anQ3 ansswer to a file
-write_csv(q3_ans, "results/q3_averaged_monthly_minimums_per_state.csv")
+
+write_csv(q3_ans, "results/q3_avg_tempdiff_by_state.csv")
+
+#Q4: Does the westmost (lowest longitude) or eastmost (highest longitude) weather station ------ 
+#    in our dataset have a higher average solar exposure?
+
+# Longitude of a station is stored in the BOM_stations.csv file, solar exposure is stored in the
+# BOM_data.csv file. We have already combined these two and stored them in the BOM_combined variable.
+
+# So the steps we need to perform are:
+#     1) Start with the data in BOM_combined
+#     2) Convert solar exposure and longitude values to numbers from text 
+#        (check the types by printing BOM_combiened out to the screen)
+#     3) Remove rows with no solar exposure measurements
+#     4) Keep only rows from the station with the highest or lowest longitude
+#     5) Group our data by station
+#     6) Summarise out data to get the average solar exposure
+
+q4_ans <- BOM_combined %>% 
+  mutate(Solar_exposure = as.numeric(Solar_exposure), lon = as.numeric(lon)) %>%
+  # Could have combined these into one filter function, but I'll separate them for a clearer example
+  filter(!is.na(Solar_exposure)) %>% 
+  filter(lon == min(lon) | lon == max(lon)) %>% # Could instead use range(): lon %in% range(lon)
+  group_by(Station_number, lon) %>% # Group by lon as well so that it appears in our final table
+  summarise(avg_solar_exp = mean(Solar_exposure))
+
+
+# Print it to the screen if running in RStudio
+# The eastmost station (longitude ~153) has a higher average solar exposure. 
+# But not by much (19.5 vs 19.2)
+q4_ans
+
+#Write out the Q4 answer to a file
+write_csv(q4_ans, "results/q4_average_solar_exposure_for_furthest_stations.csv")
