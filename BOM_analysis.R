@@ -103,14 +103,13 @@ stations_tidy <- mutate(stations_tidy, Station_number = as.numeric(Station_numbe
 BOM_combined <- left_join(BOM_with_temps, stations_tidy)
 
 # Now can run the same analysis as for Q2. Only differences are that we will group by state instead
-# of month, and we want to see the *highest* average temperature difference, so we will arrange the
-# values in descending order
+# of month
 q3_ans <- BOM_combined %>% 
   mutate(t_diff = as.numeric(t_max) - as.numeric(t_min)) %>%
   filter(!is.na(t_diff)) %>% 
   group_by(state) %>% 
   summarise(avg_t_diff = mean(t_diff)) %>% 
-  arrange(desc(avg_t_diff))
+  arrange(avg_t_diff)
 
 #Print it to the screen if running in RStudio
 #Can see that the ACT has the highest average differences between min and max temperatures (14.5)
