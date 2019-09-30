@@ -112,7 +112,7 @@ q3_ans <- BOM_combined %>%
   arrange(avg_t_diff)
 
 #Print it to the screen if running in RStudio
-#Can see that the ACT has the highest average differences between min and max temperatures (14.5)
+#Can see that the QLD has the lowest average differences between min and max temperatures (7.36)
 q3_ans
 
 
@@ -127,7 +127,7 @@ write_csv(q3_ans, "results/q3_avg_tempdiff_by_state.csv")
 # So the steps we need to perform are:
 #     1) Start with the data in BOM_combined
 #     2) Convert solar exposure and longitude values to numbers from text 
-#        (check the types by printing BOM_combiened out to the screen)
+#        (check the types by printing BOM_combined out to the screen)
 #     3) Remove rows with no solar exposure measurements
 #     4) Keep only rows from the station with the highest or lowest longitude
 #     5) Group our data by station
