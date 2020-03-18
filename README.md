@@ -49,7 +49,9 @@ in the `results` folder for review. These results are also saved as variables af
  to what I have here.
  * For teaching purposes, this code is more excessively commented than is usual.
  * The raw data files **are** included in the repository for easy reproducibility. This may not be 
- appropriate if you have very large data files or they should not be publicly accessible. 
+ appropriate if you have very large data files or they should not be publicly accessible. If excluding
+ raw data files from the repository, this README file is a good place to keep instructions on how to
+ access the data, and where the files need to be saved for the script to function.
  * The result files are *also* included in the repository. Because these files can be completely 
  recreated from the analysis script and the data files, it is not usually necessary to include them
  in the repository. I have done so here to allow people to see my output without needing to run the 
